@@ -92,11 +92,53 @@
             margin-bottom: 20px;
         }
 
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-right: 15px;
+            font-weight: 500;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-add {
+            background-color: #28a745;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+        }
+
+        .btn-edit {
+            background-color: #007bff;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: scale(1.03);
+        }
+
         #searchInput {
             display: block;
-            margin: 0 auto 20px auto;
-            padding: 8px;
-            width: 300px;
+            margin: 0 auto 30px auto;
+            padding: 10px;
+            width: 320px;
             border-radius: 6px;
             border: 1px solid #ccc;
         }
@@ -118,25 +160,6 @@
         th {
             background-color: #4a6582;
             color: white;
-        }
-
-        .delete-btn {
-            padding: 5px 10px;
-            background-color: rgb(141, 80, 80);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .edit-btn {
-            padding: 5px 10px;
-            background-color: #4a8266;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: 5px;
         }
 
         .popup {
@@ -201,48 +224,132 @@
             }
         }
 
-async function fetchUsers() {
-    const response = await fetch('/admin/users');
-    const users = await response.json();
-    const tbody = document.getElementById('userTableBody');
-    tbody.innerHTML = '';
+        async function fetchUsers() {
+            const response = await fetch('/api/admin/users');
+            const users = await response.json();
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
 
-    users.forEach(user => {
-        const tr = document.createElement('tr');
+            users.forEach(user => {
+                const tr = document.createElement('tr');
 
-        const tdId = document.createElement('td');
-        tdId.textContent = user.id;
+                const tdId = document.createElement('td');
+                tdId.textContent = user.id;
 
-        const tdName = document.createElement('td');
-        tdName.textContent = user.name || '(no name)';
+                const tdName = document.createElement('td');
+                tdName.textContent = user.name || '(no name)';
 
-        const tdEmail = document.createElement('td');
-        tdEmail.textContent = user.email || '(no email)';
+                const tdEmail = document.createElement('td');
+                tdEmail.textContent = user.email || '(no email)';
 
-        const tdAction = document.createElement('td');
-        tdAction.innerHTML = `
-            <button class="delete-btn" onclick="deleteUser(${user.id})">Delete</button>
-            <button class="edit-btn" onclick="editUser(${user.id})">Edit</button>
-        `;
+                tr.appendChild(tdId);
+                tr.appendChild(tdName);
+                tr.appendChild(tdEmail);
+                tbody.appendChild(tr);
+            });
+        }
 
-        tr.appendChild(tdId);
-        tr.appendChild(tdName);
-        tr.appendChild(tdEmail);
-        tr.appendChild(tdAction);
-        tbody.appendChild(tr);
-    });
-}
+        function filterUsers() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#userTableBody tr');
 
+            rows.forEach(row => {
+                const name = row.cells[1].textContent.toLowerCase();
+                row.style.display = name.includes(input) ? '' : 'none';
+            });
+        }
 
-        async function deleteUser(id) {
+        // ADD USER
+        function openAddPopup() {
+            document.getElementById("addOverlay").style.display = "block";
+            document.getElementById("addPopup").style.display = "block";
+        }
+
+        function closeAddPopup() {
+            document.getElementById("addOverlay").style.display = "none";
+            document.getElementById("addPopup").style.display = "none";
+        }
+
+        async function addUser() {
+            const name = document.getElementById("addName").value;
+            const email = document.getElementById("addEmail").value;
+            const password = document.getElementById("addPassword").value;
+
+            const response = await fetch('/api/admin/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
+
+            if (response.ok) {
+                alert("User added successfully!");
+                closeAddPopup();
+                fetchUsers();
+            } else {
+                const msg = await response.text();
+                alert("Failed to add user: " + msg);
+            }
+        }
+
+        // DELETE USER BY ID
+        function openDeletePopup() {
+            document.getElementById("deleteOverlay").style.display = "block";
+            document.getElementById("deletePopup").style.display = "block";
+        }
+
+        function closeDeletePopup() {
+            document.getElementById("deleteOverlay").style.display = "none";
+            document.getElementById("deletePopup").style.display = "none";
+        }
+
+        async function deleteUserById() {
+            const id = document.getElementById("deleteUserId").value;
+            if (isNaN(id) || id.trim() === "") {
+                alert("Please enter a valid User ID");
+                return;
+            }
+
             if (confirm("Are you sure you want to delete this user?")) {
-                const response = await fetch(`/admin/users/${id}`, { method: 'DELETE' });
+                const response = await fetch(`/api/admin/users/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
                 if (response.ok) {
                     alert('User deleted successfully');
+                    closeDeletePopup();
                     fetchUsers();
                 } else {
                     alert('Failed to delete user');
                 }
+            }
+        }
+
+        // EDIT USER BY ID
+        function openEditIdPopup() {
+            document.getElementById("editIdOverlay").style.display = "block";
+            document.getElementById("editIdPopup").style.display = "block";
+        }
+
+        function closeEditIdPopup() {
+            document.getElementById("editIdOverlay").style.display = "none";
+            document.getElementById("editIdPopup").style.display = "none";
+        }
+
+        async function fetchUserForEdit() {
+            const id = document.getElementById("editUserIdInput").value.trim();
+            if (isNaN(id) || id.trim() === "") {
+                alert("Please enter a valid ID");
+                return;
+            }
+
+            const response = await fetch(`/api/admin/users/${id}`);
+            if (response.ok) {
+                const user = await response.json();
+                closeEditIdPopup();
+                openEditPopup(user.id, user.name, user.email);
+            } else {
+                alert("User not found.");
             }
         }
 
@@ -263,9 +370,11 @@ async function fetchUsers() {
             const name = document.getElementById("editName").value;
             const email = document.getElementById("editEmail").value;
 
-            const response = await fetch(`/admin/users/${currentEditId}`, {
+            const response = await fetch(`/api/admin/users/${currentEditId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({ name, email })
             });
 
@@ -276,16 +385,6 @@ async function fetchUsers() {
             } else {
                 alert("Update failed.");
             }
-        }
-
-        function filterUsers() {
-            const input = document.getElementById('searchInput').value.toLowerCase();
-            const rows = document.querySelectorAll('#userTableBody tr');
-
-            rows.forEach(row => {
-                const name = row.cells[1].textContent.toLowerCase();
-                row.style.display = name.includes(input) ? '' : 'none';
-            });
         }
     </script>
 </head>
@@ -312,18 +411,55 @@ async function fetchUsers() {
 <!-- Admin Dashboard -->
 <div class="user-management">
     <h2>User Management - Admin Dashboard</h2>
+    <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/">Logout</a>
+    </div>
+
+    <!-- Styled Buttons -->
+    <div class="action-buttons">
+        <button class="btn btn-add" onclick="openAddPopup()"> Add a New User</button>
+        <button class="btn btn-delete" onclick="openDeletePopup()"> Delete a User</button>
+        <button class="btn btn-edit" onclick="openEditIdPopup()"> Edit a User</button>
+    </div>
 
     <input type="text" id="searchInput" placeholder="Search by name..." onkeyup="filterUsers()">
 
     <table>
         <thead>
-            <tr><th>ID</th><th>Name</th><th>Email</th><th>Action</th></tr>
+            <tr><th>ID</th><th>Name</th><th>Email</th></tr>
         </thead>
         <tbody id="userTableBody"></tbody>
     </table>
 </div>
 
-<!-- Edit Popup -->
+<!-- Popups and Overlays -->
+<div class="overlay" id="addOverlay" onclick="closeAddPopup()"></div>
+<div class="popup" id="addPopup">
+    <h3>Add New User</h3>
+    <input type="text" id="addName" placeholder="Name" required>
+    <input type="email" id="addEmail" placeholder="Email" required>
+    <input type="password" id="addPassword" placeholder="Password" required>
+    <button onclick="addUser()">Add</button>
+    <button onclick="closeAddPopup()">Cancel</button>
+</div>
+
+<div class="overlay" id="deleteOverlay" onclick="closeDeletePopup()"></div>
+<div class="popup" id="deletePopup">
+    <h3>Delete User</h3>
+    <input type="number" id="deleteUserId" placeholder="Enter User ID">
+    <button onclick="deleteUserById()">Delete</button>
+    <button onclick="closeDeletePopup()">Cancel</button>
+</div>
+
+<div class="overlay" id="editIdOverlay" onclick="closeEditIdPopup()"></div>
+<div class="popup" id="editIdPopup">
+    <h3>Edit User</h3>
+    <input type="number" id="editUserIdInput" placeholder="Enter User ID">
+    <button onclick="fetchUserForEdit()">Next</button>
+    <button onclick="closeEditIdPopup()">Cancel</button>
+</div>
+
 <div class="overlay" id="overlay" onclick="closeEditPopup()"></div>
 <div class="popup" id="editPopup">
     <h3>Edit User Details</h3>
