@@ -1,6 +1,7 @@
 package com.routemax.teamroutemax.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.HiddenHttpMethodFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -17,8 +18,11 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         // Will allow frontend calls later
-        registry.addMapping("/**")
+        registry.addMapping("/")
                 .allowedOrigins("http://localhost:3000") // Update this when frontend is ready
                 .allowedMethods("GET", "POST", "PUT", "DELETE");
+    }
+     public HiddenHttpMethodFilter hiddenHttpMethodFilter() {
+        return new HiddenHttpMethodFilter();
     }
 }
