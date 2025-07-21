@@ -63,7 +63,12 @@ public void updateUser(User user) {
 public void saveUser(User user) {
     userRepository.save(user);  // ✅ this saves to DB
 }
+public void registerRawUser(User user) {
+    user.setPassword(passwordEncoder.encode(user.getPassword()));
+    userRepository.save(user);
+}
+
+
 
 
 }
-
